@@ -1,5 +1,9 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+// const myPlaintextPassword = "s0//P4$$w0rD";
+// const someOtherPlaintextPassword = "not_bacon";
 
 const router = express.Router();
 const User = require("../models/User");
@@ -14,12 +18,14 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hash = bcrypt.hashSync(req.body.password, salt);
   // res.json({msg: "Hello!"});
   const user = new User({
     fullname: req.body.fullname,
     email: req.body.email,
     phone: req.body.phone,
-    password: req.body.password,
+    password: hash,
     dateOfBirth: req.body.DOB,
     gender: req.body.gender,
     address: req.body.address,
@@ -27,7 +33,7 @@ router.post("/", async (req, res) => {
   try {
     const savedUser = await user.save();
     jwt.sign({ savedUser }, "secretkey", (err, token) => {
-      res.status(200).json({savedUser,  token });
+      res.status(200).json({ savedUser, token });
     });
   } catch (err) {
     res.json({ message: err });
